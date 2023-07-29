@@ -2,14 +2,14 @@ import pygame
 import random
 
 # get maze and cell size
-print('enter number of cells each row, col, and cell size, seprate by space')
+print('enter number of cells each row, col, and cell size(in pixels), seprate by space')
 cell_size = input().split(' ')
 num_cells_x, num_cells_y, cell_width = int(
     cell_size[0]), int(cell_size[1]), int(cell_size[2])
 
 # RGB color code
 # White(255,255,255)
-# Black(0,0,0)
+# Red(255,0,0)
 # Green(0,255,0)
 # Violet(127,0,255)
 
@@ -30,12 +30,13 @@ class cell:
         self.cell_width = cell_width
         # like a disjoint set, trace which cell was the last cell of a given cell
         self.backtrace = {}
-        # draw topleft cell
+        # print top-left cell to start
         self.move(x, y, "")
 
     def move(self, x, y, direction, color=(255, 255, 255)):
-        '''break a wall by paint a larger rectangle on top of it'''
+        '''break a wall by print a larger rectangle on top of it'''
 
+        # changing printing param to print rectangles to break different direction's wall
         params = [window, color, (), 0]
         match(direction):
             case 'u':
@@ -58,36 +59,50 @@ class cell:
                              2*self.cell_width-1, self.cell_width-1)
                 self.backtrace[(x + 1, y + 1)] = (x, y)
             case 'c':
+                # print circle
                 pygame.draw.circle(window, color,
                                    (0.5*self.cell_width+x + 1, 0.5*self.cell_width+y + 1), self.cell_width/4)
                 pygame.display.update()
                 return
             case _:
-                # draw a cell at a position
+                # print a square
                 params[2] = (x + 1, y + 1,
                              self.cell_width-2, self.cell_width-2)
         pygame.draw.rect(*params)
         pygame.display.update()
 
     def back_track(self, x, y):
-        solution = ''
-        self.move(x, y, 'c', (0, 255, 0))
+        # order of how to move from end to start
+        path = ''
+        # print a red circle at the end cell
+        self.move(x, y, 'c', (255, 0, 0))
+        # tracking backward from end to start cell
         while (x, y) != (self.cell_width, self.cell_width):
+            # only one direction moving each time, so either vertical or horizontal
             if (self.backtrace[(x, y)][0] != x):
+                # horizontal
                 if self.backtrace[(x, y)][0] > x:
-                    solution += ' W'
+                    # which direction by checking x
+                    path += ' W'
                 else:
-                    solution += ' E'
+                    path += ' E'
             else:
+                # vertical
                 if self.backtrace[(x, y)][1] > y:
-                    solution += ' N'
+                    # which direction by checking y
+                    path += ' N'
                 else:
-                    solution += ' S'
+                    path += ' S'
+            # update to continue tracking backward
             x, y = self.backtrace[(x, y)]
+            # print a green circle at the next position
             self.move(x, y, 'c', (0, 255, 0))
-        # flip solution(cause it is from end to start)
-        solution = solution[::-1]
-        print(solution)
+
+        # re-print starting point to red
+        self.move(x, y, 'c', (255, 0, 0))
+        # flip path(cause it is from end to start)
+        path = path[::-1]
+        print(path)
 
 
 class maze:
@@ -111,7 +126,7 @@ class maze:
         self.make_maze(cell_width, cell_width)
 
     def make_table(self, x, y):
-        '''draw the EXCEL-like table'''
+        '''print the EXCEL-like table'''
 
         for i in range(1, self.cells_row+1):
             # for each row
@@ -185,6 +200,7 @@ class maze:
 
 # create a maze
 maz = maze(num_cells_x, num_cells_y, cell_width)
+# end cell position (x*width,y*width)
 maz.cell.back_track(num_cells_x*cell_width, num_cells_y*cell_width)
 # pause to show diagram
 input("press any button to continue...")
