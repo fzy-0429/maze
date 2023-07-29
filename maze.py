@@ -1,7 +1,8 @@
 import pygame
 import random
 
-print('enter number of all_cells each row, col, and cell size, seprate by space')
+# get maze and cell size
+print('enter number of cells each row, col, and cell size, seprate by space')
 cell_size = input().split(' ')
 num_cells_x, num_cells_y, cell_width = int(
     cell_size[0]), int(cell_size[1]), int(cell_size[2])
@@ -12,10 +13,10 @@ num_cells_x, num_cells_y, cell_width = int(
 # Green(0,255,0)
 # Violet(127,0,255)
 
-# pygame window init
+# pygame model init
 pygame.init()
 # window size
-window = pygame.display.set_mode((800, 800))
+window = pygame.display.set_mode((600, 600))
 # background color
 window.fill((255, 255, 255))
 # window title
