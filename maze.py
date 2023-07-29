@@ -24,27 +24,44 @@ pygame.display.set_caption('maze')
 
 
 class cell:
-    def __init__(self, x, y, cell_width) -> None:
+    def __init__(self, x, y, cell_width):
+        '''constructor'''
+
         self.cell_width = cell_width
+        # like a disjoint set, trace which cell was the last cell of a given cell
+        self.backtrace = {}
         # draw topleft cell
         self.move(x, y, "")
 
-    def move(self, x, y, direction):
+    def move(self, x, y, direction, color=(255, 255, 255)):
         '''break a wall by paint a larger rectangle on top of it'''
-        params = [window, (255, 255, 255), (), 0]
+
+        params = [window, color, (), 0]
         match(direction):
             case 'u':
                 params[2] = (x + 1, y - self.cell_width +
                              1, self.cell_width-1, 2*self.cell_width-1)
+                self.backtrace[(x + 1, y - self.cell_width +
+                               1)] = (x, y)
             case 'd':
                 params[2] = (x + 1, y + 1,
                              self.cell_width-1, 2*self.cell_width-1)
+                self.backtrace[(x + 1, y + 1,
+                                self.cell_width-1)] = (x, y)
             case 'l':
                 params[2] = (x - self.cell_width + 1, y +
                              1, 2*self.cell_width-1, self.cell_width-1)
+                self.backtrace[(x - self.cell_width + 1, y +
+                                1)] = (x, y)
             case 'r':
                 params[2] = (x + 1, y + 1,
                              2*self.cell_width-1, self.cell_width-1)
+                self.backtrace[(x + 1, y + 1)] = (x, y)
+            case 'c':
+                pygame.draw.circle(window, color,
+                                   (0.5*self.cell_width+x + 1, 0.5*self.cell_width+y + 1), self.cell_width/4)
+                pygame.display.update()
+                return
             case _:
                 # draw a cell at a position
                 params[2] = (x + 1, y + 1,
@@ -52,10 +69,31 @@ class cell:
         pygame.draw.rect(*params)
         pygame.display.update()
 
+    def back_track(self, x, y):
+        solution = ''
+        self.move(x, y, 'c', (0, 255, 0))
+        while (x, y) != (self.cell_width, self.cell_width):
+            if (self.backtrace[(x, y)][0] != x):
+                if self.backtrace[(x, y)][0] > x:
+                    solution += ' W'
+                else:
+                    solution += ' E'
+            else:
+                if self.backtrace[(x, y)][1] > y:
+                    solution += ' N'
+                else:
+                    solution += ' S'
+            x, y = self.backtrace[(x, y)]
+            self.move(x, y, 'c', (0, 255, 0))
+        # flip solution(cause it is from end to start)
+        solution = solution[::-1]
+        print(solution)
+
 
 class maze:
     def __init__(self, cells_col, cells_row, cell_width):
         '''constructor'''
+
         self.cells_col = cells_col
         self.cells_row = cells_row
         self.cell_width = cell_width
@@ -73,7 +111,8 @@ class maze:
         self.make_maze(cell_width, cell_width)
 
     def make_table(self, x, y):
-        '''draw the EXCEL like table'''
+        '''draw the EXCEL-like table'''
+
         for i in range(1, self.cells_row+1):
             # for each row
             x = self.cell_width
@@ -96,6 +135,8 @@ class maze:
         pygame.display.update()
 
     def make_maze(self, x, y):
+        '''make the maze by moving the cell around and take down walls'''
+
         # add top left starting cell to stack and visted cells
         self.stack.append((x, y))
         self.visted_cells[hash((x, y))] = None
@@ -116,21 +157,24 @@ class maze:
 
             # at least one nearby vaild cell
             if len(near_by_cell) > 0:
-                # randomly pick one
+                # randomly pick one, remove wall, add backtrace
                 match(random.choice(near_by_cell)):
                     case('u'):
                         self.cell.move(x, y, 'u')
+                        self.cell.backtrace[(x, y-self.cell_width)] = (x, y)
                         y -= self.cell_width
                     case('d'):
                         self.cell.move(x, y, 'd')
+                        self.cell.backtrace[(x, y+self.cell_width)] = (x, y)
                         y += self.cell_width
                     case('r'):
                         self.cell.move(x, y, 'r')
+                        self.cell.backtrace[(x+self.cell_width, y)] = (x, y)
                         x += self.cell_width
                     case('l'):
                         self.cell.move(x, y, 'l')
+                        self.cell.backtrace[(x-self.cell_width, y)] = (x, y)
                         x -= self.cell_width
-
                 # make it visted, and add to stack
                 self.visted_cells[hash((x, y))] = None
                 self.stack.append((x, y))
@@ -141,6 +185,7 @@ class maze:
 
 # create a maze
 maz = maze(num_cells_x, num_cells_y, cell_width)
+maz.cell.back_track(num_cells_x*cell_width, num_cells_y*cell_width)
 # pause to show diagram
 input("press any button to continue...")
 # quit and clean up
