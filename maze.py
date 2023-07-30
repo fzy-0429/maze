@@ -4,7 +4,7 @@ import random
 # get maze and cell size
 print('enter number of cells each row, col, and cell size(in pixels), seprate by space')
 cell_size = input().split(' ')
-num_cells_x, num_cells_y, cell_width = int(
+columns, rows, cell_width = int(
     cell_size[0]), int(cell_size[1]), int(cell_size[2])
 
 # RGB color code
@@ -16,7 +16,7 @@ num_cells_x, num_cells_y, cell_width = int(
 # pygame model init
 pygame.init()
 # window size
-window = pygame.display.set_mode((600, 600))
+window = pygame.display.set_mode((800, 800))
 # background color
 window.fill((255, 255, 255))
 # window title
@@ -28,7 +28,7 @@ class cell:
         '''constructor'''
 
         self.cell_width = cell_width
-        # like a disjoint set, trace which cell was the last cell of a given cell
+        # use position of a cell as a key to track positon of its parent cell like a disjoint set
         self.backtrace = {}
         # print top-left cell to start
         self.move(x, y, "")
@@ -71,7 +71,7 @@ class cell:
         pygame.draw.rect(*params)
         pygame.display.update()
 
-    def back_track(self, x, y):
+    def solve_maze(self, x, y):
         # order of how to move from end to start
         path = ''
         # print a red circle at the end cell
@@ -112,6 +112,8 @@ class maze:
         self.cells_col = cells_col
         self.cells_row = cells_row
         self.cell_width = cell_width
+
+        # use dict to speed up as checking if a key exist in a dict is O(1) in python, and I don't really need the value
         # a dict(hash table) of all cells created, check if a cell is vaild by check its hash in table
         self.all_cells = {}
         # same, check if a cell is visted by check if its hash in table
@@ -199,9 +201,9 @@ class maze:
 
 
 # create a maze
-maz = maze(num_cells_x, num_cells_y, cell_width)
+maz = maze(columns, rows, cell_width)
 # end cell position (x*width,y*width)
-maz.cell.back_track(num_cells_x*cell_width, num_cells_y*cell_width)
+maz.cell.solve_maze(columns*cell_width, rows*cell_width)
 # pause to show diagram
 input("press any button to continue...")
 # quit and clean up
