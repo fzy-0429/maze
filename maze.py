@@ -1,5 +1,15 @@
+# Fangzhou Ye
+# fxy210002
+# CS 3345.0U1
+
+# if you want to run it you need to install python and pygame model
+
+# for UI
 import pygame
+# for random direction choosing
 import random
+# for key interuption
+import keyboard
 
 # get maze and cell size
 print('enter number of cells each row, col, and cell size(in pixels), seprate by space')
@@ -28,7 +38,7 @@ class cell:
         '''constructor'''
 
         self.cell_width = cell_width
-        # use position of a cell as a key to track positon of its parent cell like a disjoint set
+        # use position of a cell as a key to track positon of its parent cell
         self.backtrace = {}
         # print top-left cell to start
         self.move(x, y, "")
@@ -36,7 +46,7 @@ class cell:
     def move(self, x, y, direction, color=(255, 255, 255)):
         '''break a wall by print a larger rectangle on top of it'''
 
-        # changing printing param to print rectangles to break different direction's wall
+        # changing printing param to print rectangles to remove wall in different direction
         params = [window, color, (), 0]
         match(direction):
             case 'u':
@@ -68,6 +78,8 @@ class cell:
                 # print a square
                 params[2] = (x + 1, y + 1,
                              self.cell_width-2, self.cell_width-2)
+
+        # actual printing and update
         pygame.draw.rect(*params)
         pygame.display.update()
 
@@ -98,9 +110,9 @@ class cell:
             # print a green circle at the next position
             self.move(x, y, 'c', (0, 255, 0))
 
-        # re-print starting point to red
+        # print starting point to red
         self.move(x, y, 'c', (255, 0, 0))
-        # flip path(cause it is from end to start)
+        # inverse path(cause it is from end to start, we want start to end)
         path = path[::-1]
         print(path)
 
@@ -130,12 +142,13 @@ class maze:
     def make_table(self, x, y):
         '''print the EXCEL-like table'''
 
+        # for each row
         for i in range(1, self.cells_row+1):
-            # for each row
             x = self.cell_width
             y += self.cell_width
+
+            # for each position for cells in the row, draw walls
             for j in range(1, self.cells_col+1):
-                # for each position for cells in the row, draw walls
                 pygame.draw.line(
                     window, (127, 0, 255), [x, y], [x + self.cell_width, y])
                 pygame.draw.line(
@@ -174,11 +187,14 @@ class maze:
 
             # at least one nearby vaild cell
             if len(near_by_cell) > 0:
-                # randomly pick one, remove wall, add backtrace
+                # randomly pick one, remove wall, add backtrace record
                 match(random.choice(near_by_cell)):
                     case('u'):
+                        # remove the top wall by moving up
                         self.cell.move(x, y, 'u')
+                        # save to back tracking stack
                         self.cell.backtrace[(x, y-self.cell_width)] = (x, y)
+                        # change value, y reduce a cell width to move up
                         y -= self.cell_width
                     case('d'):
                         self.cell.move(x, y, 'd')
@@ -204,7 +220,12 @@ class maze:
 maz = maze(columns, rows, cell_width)
 # end cell position (x*width,y*width)
 maz.cell.solve_maze(columns*cell_width, rows*cell_width)
+
 # pause to show diagram
-input("press any button to continue...")
-# quit and clean up
-pygame.quit()
+print("press any button to continue...")
+while (True):
+    # keyboard interuption
+    if keyboard.read_key():
+        # quit and clean up
+        pygame.quit()
+        exit()
