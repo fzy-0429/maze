@@ -2,7 +2,7 @@
 # fxy210002
 # CS 3345.0U1
 
-# if you want to run it you need to install python and pygame model
+# if you want to run it you need to install python and pygame module
 
 # for UI
 import pygame
@@ -23,7 +23,7 @@ columns, rows, cell_width = int(
 # Green(0,255,0)
 # Violet(127,0,255)
 
-# pygame model init
+# pygame module init
 pygame.init()
 # window size
 window = pygame.display.set_mode((800, 800))
@@ -33,12 +33,14 @@ window.fill((255, 255, 255))
 pygame.display.set_caption('maze')
 
 
-class cell:
+# a cell painter that moves around and breaking walls and create connected cells by DFS. A cell painter created at the left top, and do a
+# DFS, breaking down the walls on it path.
+class cell_painter:
     def __init__(self, x, y, cell_width):
         '''constructor'''
 
         self.cell_width = cell_width
-        # use position of a cell as a key to track positon of its parent cell
+        # use coordinate of a cell as a key to track coordinate of its parent cell
         self.backtrace = {}
         # print top-left cell to start
         self.move(x, y, "")
@@ -107,7 +109,7 @@ class cell:
                     path += ' S'
             # update to continue tracking backward
             x, y = self.backtrace[(x, y)]
-            # print a green circle at the next position
+            # print a green circle at the next coordinate
             self.move(x, y, 'c', (0, 255, 0))
 
         # print starting point to red
@@ -126,28 +128,29 @@ class maze:
         self.cell_width = cell_width
 
         # use dict to speed up as checking if a key exist in a dict is O(1) in python, and I don't really need the value
-        # a dict(hash table) of all cells created, check if a cell is vaild by check its hash in table
+        # a dict(hash table) of all cells created, check if the hash of coordinate is in keys of hash table
         self.all_cells = {}
-        # same, check if a cell is visted by check if its hash in table
+        # check if a cell is visted by check if the hash of coordinate is in keys of hash table
         self.visted_cells = {}
         # stack store comming path to move backward when needed
         self.stack = []
-        # make the the table of walls
-        self.make_table(0, 0)
-        # create a cell at top left corner
-        self.cell = cell(self.cell_width, self.cell_width, self.cell_width)
-        # move the cell around to make maze
+        # make the all cells not connected grid
+        self.make_grid(0, 0)
+        # create a cell painter at top left corner
+        self.cell_painter = cell_painter(
+            self.cell_width, self.cell_width, self.cell_width)
+        # move the cell painter around to make maze
         self.make_maze(cell_width, cell_width)
 
-    def make_table(self, x, y):
-        '''print the EXCEL-like table'''
+    def make_grid(self, x, y):
+        '''print the EXCEL-like table, each cell has a coordinate'''
 
         # for each row
         for i in range(1, self.cells_row+1):
             x = self.cell_width
             y += self.cell_width
 
-            # for each position for cells in the row, draw walls
+            # for each coordinate for cells in the row, draw walls
             for j in range(1, self.cells_col+1):
                 pygame.draw.line(
                     window, (127, 0, 255), [x, y], [x + self.cell_width, y])
@@ -159,19 +162,19 @@ class maze:
                                  x, y + self.cell_width], [x, y])
                 # add cell hash to dict(hash table) keys
                 self.all_cells[hash((x, y))] = None
-                # next position
+                # next coordinate
                 x = x + self.cell_width
         # update screen to display
         pygame.display.update()
 
     def make_maze(self, x, y):
-        '''make the maze by moving the cell around and take down walls'''
+        '''make the maze by moving the cell painter move around and take down walls'''
 
         # add top left starting cell to stack and visted cells
         self.stack.append((x, y))
         self.visted_cells[hash((x, y))] = None
 
-        # repeat until stack empty
+        # DFS to visted all other unvisted cells, repeat until stack empty
         while len(self.stack):
             # store unvisited near by cells
             near_by_cell = []
@@ -185,30 +188,34 @@ class maze:
             near_by_cell.append('r')if (hash((x + self.cell_width, y))
                                         not in self.visted_cells.keys() and hash((x + self.cell_width, y)) in self.all_cells.keys())else None
 
-            # at least one nearby vaild cell
+            # if there is at least one nearby vaild cell
             if len(near_by_cell) > 0:
-                # randomly pick one, remove wall, add backtrace record
+                # randomly pick one, remove wall, add backtrace record, move painter to there
                 match(random.choice(near_by_cell)):
                     case('u'):
                         # remove the top wall by moving up
-                        self.cell.move(x, y, 'u')
+                        self.cell_painter.move(x, y, 'u')
                         # save to back tracking stack
-                        self.cell.backtrace[(x, y-self.cell_width)] = (x, y)
+                        self.cell_painter.backtrace[(
+                            x, y-self.cell_width)] = (x, y)
                         # change value, y reduce a cell width to move up
                         y -= self.cell_width
                     case('d'):
-                        self.cell.move(x, y, 'd')
-                        self.cell.backtrace[(x, y+self.cell_width)] = (x, y)
+                        self.cell_painter.move(x, y, 'd')
+                        self.cell_painter.backtrace[(
+                            x, y+self.cell_width)] = (x, y)
                         y += self.cell_width
                     case('r'):
-                        self.cell.move(x, y, 'r')
-                        self.cell.backtrace[(x+self.cell_width, y)] = (x, y)
+                        self.cell_painter.move(x, y, 'r')
+                        self.cell_painter.backtrace[(
+                            x+self.cell_width, y)] = (x, y)
                         x += self.cell_width
                     case('l'):
-                        self.cell.move(x, y, 'l')
-                        self.cell.backtrace[(x-self.cell_width, y)] = (x, y)
+                        self.cell_painter.move(x, y, 'l')
+                        self.cell_painter.backtrace[(
+                            x-self.cell_width, y)] = (x, y)
                         x -= self.cell_width
-                # make it visted, and add to stack
+                # mark it visted, and add to stack
                 self.visted_cells[hash((x, y))] = None
                 self.stack.append((x, y))
             else:
@@ -218,11 +225,18 @@ class maze:
 
 # create a maze
 maz = maze(columns, rows, cell_width)
-# end cell position (x*width,y*width)
-maz.cell.solve_maze(columns*cell_width, rows*cell_width)
 
-# pause to show diagram
+# to show generated maze without showing solution
 print("press any button to continue...")
+while (True):
+    if keyboard.read_key():
+        break
+
+# show solution
+# end cell coordinate (x*width,y*width)
+maz.cell_painter.solve_maze(columns*cell_width, rows*cell_width)
+
+# pause to show maze with solution
 while (True):
     # keyboard interuption
     if keyboard.read_key():
